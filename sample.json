@@ -1,0 +1,19 @@
+{
+  "list":
+    [
+      {
+        "name": "TODO 1",
+        "h": true,
+        "w": true,
+        "d": false,
+        "counter": 0
+      },
+      {
+        "name": "TODO 2",
+        "h": false,
+        "w": true,
+        "d": false,
+        "counter": 0
+      }
+    ]
+}

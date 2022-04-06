@@ -1,0 +1,4 @@
+.idea/**
+css/bootstrap*
+js/bootstrap*
+*.iml

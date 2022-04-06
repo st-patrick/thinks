@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <meta name="theme-color" content="rgb(200, 215, 242)">
+    <meta name="theme-color" content="rgb(133, 154, 182)" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="rgb(200, 215, 242)" media="(prefers-color-scheme: dark)">
+
+    <style>
+        .todo-input {
+        }
+
+        .btn-primary {
+            background-color: #b1c9fe;
+            border-color: #b1c9fe;
+            color: #438594;
+        }
+
+        .ios-peek {
+            position: fixed;
+            z-index: -1;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(rgb(200, 215, 242), rgb(183, 199, 227), rgb(166, 184, 212), rgb(149, 169, 197), rgb(133, 154, 182));
+            height: 100vh;
+            width: 100vw;
+        }
+    </style>
+
+    <title>Todo list hwd 0</title>
+</head>
+<body style="background: linear-gradient(rgb(200, 215, 242), rgb(183, 199, 227), rgb(166, 184, 212), rgb(149, 169, 197), rgb(133, 154, 182));">
+
+    <div class="container mt-3 mb-5">
+        <div class="row">
+            <div class="col-12 col-md-10 offset-md-1 col-lg-8 offset-lg-2 col-xl-6 offset-xl-3 col-xxl-4 offset-xxl-4">
+                <div id="list">
+                    <input class="form-control mb-2 todo-input" type="text">
+                    <input class="form-control mb-2 todo-input" type="text">
+                    <input class="form-control mb-2 todo-input" type="text">
+                    <input class="form-control mb-2 todo-input" type="text">
+                    <input class="form-control mb-2 todo-input" type="text">
+                    <input class="form-control mb-2 todo-input" type="text">
+                </div>
+                <div class="mb-2 text-center">
+                    <button class="text-center btn btn-lg btn-primary fw-bold pb-3" onclick=" saveDizBitch();">save</button>
+                    <button class="text-center btn btn-lg btn-primary fw-bold pb-3" onclick="addTodo();">new</button>
+                    <button class="text-center btn btn-lg btn-primary fw-bold pb-3" onclick="sortTodos();">sort</button>
+                </div>
+                <div class="text-center fw-bold" id="count" style="color: white;">
+                    0
+                </div>
+            </div>
+        </div>
+
+
+        <br><br><br>
+
+    </div>
+
+    <div class="ios-peek">
+    </div>
+
+</body>
+<!-- Option 1: Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+<script>
+
+    let globalList = [];
+
+    async function getJSONdata() {
+        const request = new Request('https://api.npoint.io/09f00b9000d1a3a5902a', {method: 'GET'});
+
+        return await thatFetchStuff(request);
+    }
+
+    async function thatFetchStuff(request) {
+        let responseObject = {};
+
+        await fetch(request)
+            .then(response => {
+                if (response.status === 200) {
+                    return response.json();
+                } else {
+                    throw new Error('Something went wrong on api server!');
+                }
+            })
+            .then(response => {
+                responseObject = response;
+                // ...
+            }).catch(error => {
+                console.error(error);
+            });
+
+        return responseObject;
+    }
+
+    async function main() {
+        let response = await getJSONdata();
+        globalList = response.list;
+
+        sortOnly();
+        updateCount();
+    }
+
+    function sortTodos() {
+        getTodosFromInputs();
+        sortOnly();
+        updateCount();
+    }
+
+    function sortOnly(){
+        let listOnlyNames = convertToOnlyNames(globalList);
+        listOnlyNames = listOnlyNames.sort(compareTodoScore);
+        renderFromNameList(listOnlyNames);
+    }
+
+    function convertToOnlyNames(objectList) {
+        let listOnlyNames = [];
+        for(let todo of objectList) {
+            listOnlyNames.push(todo.name);
+        }
+        return listOnlyNames;
+    }
+
+    function addTodo(){
+        let listDOM = document.getElementById('list');
+        let content = "<input class=\"form-control mb-2 todo-input\" type=\"text\" placeholder=\"type here\">";
+        listDOM.insertAdjacentHTML('beforeend', content);
+        updateCount();
+    }
+
+    async function renderFromList(list) {
+        let listDOM = document.getElementById('list');
+        let listHTML = "";
+
+        for(let todo of list) {
+            listHTML += "<li>" + todo.name + "</li>";
+        }
+
+        listDOM.innerHTML = listHTML;
+    }
+
+    async function renderFromNameList(list) {
+        let listDOM = document.getElementById('list');
+        let listHTML = "";
+
+        for(let todo of list) {
+            listHTML += "<input class=\"form-control mb-2 todo-input\" type=\"text\" value=\"" + todo + "\" aria-label=\"default input example\">";
+        }
+
+        listDOM.innerHTML = listHTML;
+    }
+
+    function updateCount(){
+        let count = document.getElementsByClassName('todo-input').length;
+        document.getElementById('count').innerHTML = count;
+    }
+
+    function TodoName2Score(todoname) {
+        let highImpact = todoname.charAt(0);
+        let importance = todoname.charAt(1);
+        let urgency = todoname.charAt(2);
+
+        if (highImpact != '-') {
+            highImpact = 100;
+        } else { highImpact = 0; }
+        if (importance != '-') {
+            importance = 10;
+        } else { importance = 0; }
+        if (urgency != '-') {
+            urgency = 1;
+        } else { urgency = 0; }
+
+        return highImpact + importance + urgency;
+    }
+
+    function compareTodoScore(a, b) {
+        return TodoName2Score(b) - TodoName2Score(a);
+    }
+
+    function getTodosFromInputs() {
+        const todoInputs = document.getElementsByClassName("todo-input");
+        globalList = [];
+        for(let todo of todoInputs) {
+            if(todo.value != "") {
+                globalList.push({name: todo.value});
+            }
+        }
+    }
+
+    async function saveDizBitch() {
+        getTodosFromInputs();
+
+        const body = {list: globalList};
+        const bodyJSON = JSON.stringify(body);
+
+        const request = new Request('https://api.npoint.io/09f00b9000d1a3a5902a', {
+            method: 'POST',
+            body: bodyJSON,
+            headers: {'Authorization': 'Bearer PhKqhyh2LEhtBbRPLABwB7pq'}
+        });
+
+        thatFetchStuff(request);
+    }
+
+    main();
+
+
+
+
+</script>
+
+</html>
